@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.highjump.guardhelper.MainActivity"
+    tools:showIn="@layout/app_bar_main">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:scrollbars="vertical">
+    </android.support.v7.widget.RecyclerView>
+
+    <!-- 分割线 -->
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height=".5dp"
+        android:background="@color/colorPrimary"
+    />
+
+    <!-- 输入栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/main_margin_hori"
+        android:paddingRight="@dimen/main_margin_hori"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/imgview_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/chat_more"/>
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+        <Button
+            android:id="@+id/but_send"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:text="发送"/>
+
+    </LinearLayout>
+
+    <!-- 输入更多 -->
+    <RelativeLayout
+        android:id="@+id/layout_more"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <!-- 分割线 -->
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height=".5dp"
+            android:background="@color/colorPrimary"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/but_camera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableTop="@drawable/chat_more_photo"
+                android:drawablePadding="@dimen/main_but_drawable_padding"
+                android:paddingTop="@dimen/main_but_padding"
+                android:paddingBottom="@dimen/main_but_padding"
+                android:text="打开相机"
+                android:textColor="@android:color/darker_gray"
+                android:background="@null"/>
+
+            <Button
+                android:id="@+id/but_gallery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableTop="@drawable/chat_more_pic"
+                android:drawablePadding="@dimen/main_but_drawable_padding"
+                android:paddingTop="@dimen/main_but_padding"
+                android:paddingBottom="@dimen/main_but_padding"
+                android:text="打开图库"
+                android:textColor="@android:color/darker_gray"
+                android:background="@null"/>
+
+            <Button
+                android:id="@+id/but_video"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableTop="@drawable/chat_more_video"
+                android:drawablePadding="@dimen/main_but_drawable_padding"
+                android:paddingTop="@dimen/main_but_padding"
+                android:paddingBottom="@dimen/main_but_padding"
+                android:text="打开视频"
+                android:textColor="@android:color/darker_gray"
+                android:background="@null"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</LinearLayout>

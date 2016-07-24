@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:orientation="vertical"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.highjump.guardhelper.SettingActivity"
+    tools:showIn="@layout/activity_setting">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/setting_margin_top"
+        android:text="上报数据地址："/>
+    <EditText
+        android:id="@+id/edit_uploadaddr"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/setting_margin_top"
+        android:text="请求命令地址："/>
+    <EditText
+        android:id="@+id/edit_orderaddr"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"/>
+
+    <Button
+        android:id="@+id/but_set"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/login_but_height"
+        android:layout_marginTop="@dimen/sign_but_margin_top"
+        android:text="确 定"
+        android:textSize="@dimen/login_but_text_size"  />
+
+</LinearLayout>
