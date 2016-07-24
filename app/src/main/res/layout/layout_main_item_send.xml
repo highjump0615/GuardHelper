@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/main_item_margin_vert"
+    android:layout_marginBottom="@dimen/main_item_margin_vert">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="2016/07/24 22:30"/>
+
+    <RelativeLayout
+        android:id="@+id/layout_chat_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:background="@drawable/bubble_classic_blue">
+
+        <TextView
+            android:id="@+id/text_msg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="502有窗户未关请求信息指导\n有情况！ 请上前看看" />
+
+    </RelativeLayout>
+
+
+</LinearLayout>

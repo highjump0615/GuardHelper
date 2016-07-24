@@ -4,6 +4,8 @@ import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,12 +22,20 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.highjump.guardhelper.adapter.MainItemAdapter;
 import com.highjump.guardhelper.utils.CommonUtils;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
+    // 输入框更多
     private RelativeLayout mLayoutMore;
+
+    // 聊天列表
+    private RecyclerView mRecyclerView;
+    private LinearLayoutManager mLayoutManager;
+
+    public MainItemAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +63,16 @@ public class MainActivity extends AppCompatActivity
         imgView.setOnClickListener(this);
 
         mLayoutMore = (RelativeLayout) findViewById(R.id.layout_more);
+
+        // 列表设置
+        mRecyclerView = (RecyclerView)findViewById(R.id.list);
+
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        mAdapter = new MainItemAdapter(this);
+        mRecyclerView.setAdapter(mAdapter);
     }
-
-
 
     @Override
     public void onBackPressed() {
@@ -122,23 +139,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void toggleMore() {
-//        if (mLayoutMore.getVisibility() == View.GONE) {
+        if (mLayoutMore.getVisibility() == View.GONE) {
             // 显示
             mLayoutMore.setVisibility(View.VISIBLE);
-
-        mLayoutMore.animate().setInterpolator(new AccelerateInterpolator()).translationYBy(-500);
-//
-//            int nHeight = mLayoutMore.getHeight();
-//            TranslateAnimation transAlpha = new TranslateAnimation(0, 0, 0, nHeight);
-//            transAlpha.setDuration(2000);
-//            transAlpha.setFillAfter(true);
-//            transAlpha.setInterpolator(new AccelerateInterpolator() );
-//            mLayoutMore.startAnimation(transAlpha);
-
-//        }
-//        else {
-//            // 隐藏
-//            mLayoutMore.setVisibility(View.GONE);
-//        }
+        }
+        else {
+            // 隐藏
+            mLayoutMore.setVisibility(View.GONE);
+        }
     }
 }

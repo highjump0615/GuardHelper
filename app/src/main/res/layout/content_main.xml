@@ -12,8 +12,10 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
+        android:paddingLeft="@dimen/main_margin_hori"
+        android:paddingRight="@dimen/main_margin_hori"
         android:scrollbars="vertical">
     </android.support.v7.widget.RecyclerView>
 
@@ -54,7 +56,8 @@
     <RelativeLayout
         android:id="@+id/layout_more"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:visibility="gone">
         <!-- 分割线 -->
         <View
             android:layout_width="fill_parent"
