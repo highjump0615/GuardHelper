@@ -7,10 +7,16 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
+import com.highjump.guardhelper.api.API_Manager;
+import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
 
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
+
+    // 当前用户
+    private UserData mCurrentUser;
 
     private EditText mEditDataAddr;
     private EditText mEditOrderAddr;
@@ -24,6 +30,9 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
+
+        // 获取当前用户
+        mCurrentUser = UserData.currentUser();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -40,9 +49,16 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             }
         });
 
+        // 警号TextView
+        TextView textUsername = (TextView) toolbar.findViewById(R.id.text_tb_username);
+        textUsername.setText("警号：" + mCurrentUser.getUsername());
+
         // 输入框
         mEditDataAddr = (EditText)findViewById(R.id.edit_uploadaddr);
         mEditOrderAddr = (EditText)findViewById(R.id.edit_orderaddr);
+
+        mEditDataAddr.setText(API_Manager.getDataApiPath());
+        mEditOrderAddr.setText(API_Manager.getOrderApiPath());
 
         // 确定按钮
         Button button = (Button) findViewById(R.id.but_set);
@@ -79,6 +95,8 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             CommonUtils.createErrorAlertDialog(this, "请输入请求命令地址").show();
             return;
         }
+
+        API_Manager.setApiPath(mStrDataAddr, mStrOrderAddr);
 
         // 返回主页面
         onBackPressed();

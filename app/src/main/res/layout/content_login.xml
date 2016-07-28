@@ -35,7 +35,8 @@
         android:layout_marginLeft="@dimen/login_edit_margin_hori"
         android:layout_marginRight="@dimen/login_edit_margin_hori"
         android:hint="请输入警号"
-        android:inputType="textPersonName|textNoSuggestions"/>
+        android:inputType="textPersonName|textNoSuggestions"
+        android:lines="1"/>
 
     <EditText
         android:id="@+id/edit_password"
@@ -45,7 +46,8 @@
         android:layout_marginLeft="@dimen/login_edit_margin_hori"
         android:layout_marginRight="@dimen/login_edit_margin_hori"
         android:hint="请输入密码"
-        android:inputType="textPassword"/>
+        android:inputType="textPassword"
+        android:lines="1"/>
 
     <Button
         android:id="@+id/but_login"
