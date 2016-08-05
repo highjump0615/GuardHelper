@@ -73,6 +73,5 @@ public class ExitActivity extends AppCompatActivity implements View.OnClickListe
         intent.putExtra(LoginActivity.IS_EXIT, true);
 
         startActivity(intent);
-
     }
 }

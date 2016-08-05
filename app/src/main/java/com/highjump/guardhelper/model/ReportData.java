@@ -21,9 +21,16 @@ public class ReportData {
 
     private String mstrData;
 
-    public ReportData(String data, int type) {
+    /**
+     * constructor
+     * @param data
+     * @param type
+     * @param receive - 0:上报, 1:获取
+     */
+    public ReportData(String data, int type, int receive) {
         mstrData = data;
         mnType = type;
+        mnSend = receive;
 
         // 当前时间
         mDate = new Date();
@@ -44,7 +51,7 @@ public class ReportData {
 
     public String getTime() {
         // 时间格式化 - 换成北京时间
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         format.setTimeZone(TimeZone.getTimeZone("GMT+08"));
         String strTime = format.format(mDate);
 

@@ -31,6 +31,8 @@ public class ApiResult {
         return mstrResult;
     }
 
+    private Element mEleData;
+
     public ApiResult(String response) {
         try {
             // 返回来的数据的都是encoded, 所以先把它解码
@@ -49,7 +51,7 @@ public class ApiResult {
     private void resolveParamXML(String strResponse) {
 
         // 先把str换成inputsource, 不然parse函数把它当成URI
-        StringReader stringReader  =  new StringReader(strResponse);
+        StringReader stringReader  =  new StringReader(strResponse.trim());
         InputSource inputSource  =  new  InputSource(stringReader);
 
         try {
@@ -61,15 +63,15 @@ public class ApiResult {
 
             // data节点
             NodeList nlData = doc.getElementsByTagName(NODE_ROOT);
-            Element eleData = (Element) nlData.item(0);
+            mEleData = (Element) nlData.item(0);
 
             // action节点
-            NodeList nlAction = eleData.getElementsByTagName(PARAM_ACTION);
+            NodeList nlAction = mEleData.getElementsByTagName(PARAM_ACTION);
             Element eleAction = (Element) nlAction.item(0);
             String strAction = eleAction.getChildNodes().item(0).getNodeValue();
 
             // result节点
-            NodeList nlResult = eleData.getElementsByTagName(PARAM_RESULT);
+            NodeList nlResult = mEleData.getElementsByTagName(PARAM_RESULT);
             Element eleResult = (Element) nlResult.item(0);
             mstrResult = eleResult.getChildNodes().item(0).getNodeValue();
 
@@ -82,4 +84,27 @@ public class ApiResult {
         }
     }
 
+    /**
+     * 获取返回结果的节点内容
+     * @return
+     */
+    public String getNodeData(String nodeName) {
+        String strRes = null;
+
+        if (mEleData == null)
+            return null;
+
+        // 节点
+        NodeList nlRes = mEleData.getElementsByTagName(nodeName);
+        Element eleRes = (Element) nlRes.item(0);
+
+        // 如果找不到这个节点，则退出
+        if (eleRes == null) {
+            return null;
+        }
+
+        strRes = eleRes.getChildNodes().item(0).getNodeValue();
+
+        return strRes;
+    }
 }

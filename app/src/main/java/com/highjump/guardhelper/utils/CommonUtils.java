@@ -17,6 +17,11 @@ import java.security.NoSuchAlgorithmException;
  */
 public class CommonUtils {
 
+    public static TencentGPSTracker mTencentGPSTracker = null;
+
+    // 上报位置时间间隔
+    public static int mnLocationInterval = Config.LOCATION_INTERVAL_BEFORE_SIGN;
+
     /**
      * 获取md5加密字符串
      * @param encTarget - 原码字符串
@@ -68,9 +73,9 @@ public class CommonUtils {
     public static void moveNextActivity(Activity source, Class<?> destinationClass, boolean removeSource) {
         Intent intent = new Intent(source, destinationClass);
 
-        if (removeSource) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        }
+//        if (removeSource) {
+//            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+//        }
 
         source.startActivity(intent);
 

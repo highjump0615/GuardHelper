@@ -1,6 +1,7 @@
 package com.highjump.guardhelper;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -16,8 +17,14 @@ import android.widget.NumberPicker;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import com.highjump.guardhelper.api.API_Manager;
+import com.highjump.guardhelper.api.ApiResult;
 import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
+import com.highjump.guardhelper.utils.Config;
+import com.loopj.android.http.TextHttpResponseHandler;
+
+import cz.msebera.android.httpclient.Header;
 
 public class SignActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -31,12 +38,10 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
     private RadioButton mRadioStreet;
     private RadioButton mRadioHigh;
 
-    // 位置
-    private EditText mEditLocation;
-    private String mStrLocation;
-
     // 楼层对话框
     AlertDialog mDialogStorey;
+
+    private ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +70,6 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
         TextView textUsername = (TextView) toolbar.findViewById(R.id.text_tb_username);
         textUsername.setText("警号：" + mCurrentUser.getUsername());
 
-        // 位置
-        mEditLocation = (EditText) findViewById(R.id.edit_location);
-
         // 单选框
         mRadioStreet = (RadioButton) findViewById(R.id.rad_street);
         mRadioHigh = (RadioButton) findViewById(R.id.rad_high);
@@ -82,16 +84,6 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
         mEditStorey = (EditText) findViewById(R.id.edit_storey);
         // 阻止弹出键盘
         mEditStorey.setInputType(InputType.TYPE_NULL);
-
-        // 焦点到了这个edit, 弹出对话框
-        mEditStorey.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean b) {
-                if (b) {
-                    mDialogStorey.show();
-                }
-            }
-        });
 
         // 点击这个edit, 弹出对话框
         mEditStorey.setOnClickListener(new View.OnClickListener() {
@@ -112,10 +104,8 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        if (mEditLocation != null) {
-                            // 设置楼层输入框数值
-                            mEditStorey.setText("" + mPicker.getValue());
-                        }
+                        // 设置楼层输入框数值
+                        mEditStorey.setText("" + mPicker.getValue());
                     }
                 })
                 .create();
@@ -139,15 +129,49 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
      * 签到
      */
     private void doSign() {
-        mStrLocation = mEditLocation.getText().toString();
 
-        // 检查输入是否合适
-        if (TextUtils.isEmpty(mStrLocation)) {
-            CommonUtils.createErrorAlertDialog(this, "请输入位置").show();
+        // 如果正在签到，则退出
+        if (mProgressDialog != null && mProgressDialog.isShowing()) {
             return;
         }
 
-        // 跳转到签到页面
-        CommonUtils.moveNextActivity(this, MainActivity.class, true);
+        mProgressDialog = ProgressDialog.show(this, "", "正在签到...");
+
+        // 调用相应的API
+        API_Manager.getInstance().signArrival(
+                mCurrentUser,
+                new TextHttpResponseHandler() {
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                        CommonUtils.createErrorAlertDialog(SignActivity.this, Config.STR_CONNET_FAIL, throwable.getMessage()).show();
+                    }
+
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                        mProgressDialog.dismiss();
+
+                        try {
+                            // 获取返回数据
+                            ApiResult resultObj = new ApiResult(responseString);
+
+                            if (Integer.parseInt(resultObj.getResult()) < 1) {
+                                CommonUtils.createErrorAlertDialog(SignActivity.this, "签到失败！").show();
+                                return;
+                            }
+
+                            // 更新定位时间间隔
+                            CommonUtils.mnLocationInterval = Config.LOCATION_INTERVAL_AFTER_SIGN;
+
+                            // 跳转到主页面
+                            CommonUtils.moveNextActivity(SignActivity.this, MainActivity.class, true);
+                        }
+                        catch (Exception e) {
+                            // 解析失败
+                            CommonUtils.createErrorAlertDialog(SignActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
+                        }
+                    }
+                }
+        );
     }
+
 }

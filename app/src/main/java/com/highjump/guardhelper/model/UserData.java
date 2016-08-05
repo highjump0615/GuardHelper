@@ -5,6 +5,9 @@ package com.highjump.guardhelper.model;
  */
 public class UserData {
 
+    // 特殊账号
+    public static String DEFAULT_USER = "khjy";
+
     // 用户名
     private String mStrUsername;
 

@@ -1,5 +1,7 @@
 package com.highjump.guardhelper;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import com.highjump.guardhelper.api.API_Manager;
 import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
+import com.highjump.guardhelper.utils.Config;
 
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -97,6 +100,18 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         }
 
         API_Manager.setApiPath(mStrDataAddr, mStrOrderAddr);
+
+        // Save user phone and flag of signed into NSUserDefaults
+        SharedPreferences preferences = getSharedPreferences(Config.PREF_NAME, Context.MODE_PRIVATE);
+        final SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(Config.PREF_URL_DATA, mStrDataAddr);
+        editor.putString(Config.PREF_URL_ORDER, mStrOrderAddr);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                editor.commit();
+            }
+        }).start();
 
         // 返回主页面
         onBackPressed();

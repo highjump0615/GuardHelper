@@ -1,6 +1,7 @@
 package com.highjump.guardhelper.api;
 
 import com.highjump.guardhelper.model.ReportData;
+import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -14,9 +15,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -41,13 +45,17 @@ public class API_Manager {
     // API功能
     private final String ACTION_LOGIN = "login";
     private final String ACTION_REPORTDATA = "reportdata";
+    private final String ACTION_QUERYORDER = "queryorder";
+    private final String ACTION_GETORDER = "sendorder";
+    private final String ACTION_SIGN = "signin";
+    private final String ACTION_REPORTLOCATION = "reportlocation";
 
     // 参数名称
     private final String PARAM_ACTION = "action";
     private final String PARAM_DATA = "data";
 
     // 时限 (毫秒)
-    private int mnTimeout = 60000;
+//    private int mnTimeout = 60000;
 
     // 实例； 第一次被调用的时候会设置
     private static API_Manager mInstance = null;
@@ -70,11 +78,22 @@ public class API_Manager {
         return API_PATH_DATA;
     }
 
+    public static void setDataApiPath(String path) {
+        API_PATH_DATA = path;
+    }
+
     public static String getOrderApiPath() {
         return API_PATH_ORDER;
     }
 
+    public static void setOrderApiPath(String path) {
+        API_PATH = path;
+        API_PATH_ORDER = path;
+    }
+
+
     public static void setApiPath(String urlData, String urlOrder) {
+        API_PATH = urlOrder;
         API_PATH_DATA = urlData;
         API_PATH_ORDER = urlOrder;
     }
@@ -139,6 +158,20 @@ public class API_Manager {
     }
 
     /**
+     * 返回现在日期时间
+     * @return
+     */
+    private String getCurrentTimeFormat() {
+
+        // 时间格式化 - 换成北京时间
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        format.setTimeZone(TimeZone.getTimeZone("GMT+08"));
+        String strTime = format.format(new Date());
+
+        return strTime;
+    }
+
+    /**
      * 登录
      * @param username - 警号
      * @param userpassword - 密码
@@ -155,24 +188,15 @@ public class API_Manager {
         mapParam.put("username", username);
         mapParam.put("password", CommonUtils.getMD5EncryptedString(userpassword));
 
-        try {
-            // encode XML数据
-            String strDataEncoded = URLEncoder.encode(createParamXML(mapParam), "UTF-8");
-            params.put("data", strDataEncoded);
-
-            sendToServiceByPost(API_PATH, params, responseHandler);
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
     }
 
     /**
      * 上报数据
-     * @param username - 用户名
+     * @param user - 用户对象
      * @param data - 数据
      */
-    public void reportData(String username,
+    public void reportData(UserData user,
                            ReportData data,
                            AsyncHttpResponseHandler responseHandler) {
 
@@ -181,24 +205,96 @@ public class API_Manager {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_REPORTDATA);
-        mapParam.put("username", username);
-        mapParam.put("location", "0,0");
+        mapParam.put("username", user.getUsername());
+        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
         mapParam.put("time", data.getTime());
         mapParam.put("information", data.getData());
         mapParam.put("datatype", data.getType());
 
-        try {
-            // encode XML数据
-            String strDataEncoded = URLEncoder.encode(createParamXML(mapParam), "UTF-8");
-            params.put("data", strDataEncoded);
-
-            sendToServiceByPost(API_PATH, params, responseHandler);
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
     }
 
+    /**
+     * 上报位置
+     * @param user - 用户对象
+     */
+    public void reportLocation(UserData user,
+                               AsyncHttpResponseHandler responseHandler) {
+
+        RequestParams params = new RequestParams();
+
+        // 创建参数Map
+        Map<String, Object> mapParam = new HashMap<String, Object>();
+        mapParam.put(PARAM_ACTION, ACTION_REPORTLOCATION);
+        mapParam.put("username", user.getUsername());
+        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("time", getCurrentTimeFormat());
+
+        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+    }
+
+    /**
+     * 请求命令
+     * @param user - 用户对象
+     * @param responseHandler
+     */
+    public void queryOrder(UserData user,
+                           AsyncHttpResponseHandler responseHandler) {
+
+        RequestParams params = new RequestParams();
+
+        // 创建参数Map
+        Map<String, Object> mapParam = new HashMap<String, Object>();
+        mapParam.put(PARAM_ACTION, ACTION_QUERYORDER);
+        mapParam.put("username", user.getUsername());
+        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("time", getCurrentTimeFormat());
+
+        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+    }
+
+    /**
+     * 获取命令
+     * @param user - 用户对象
+     * @param orderNo - 命令编号
+     * @param responseHandler
+     */
+    public void getOrder(UserData user,
+                         String orderNo,
+                         AsyncHttpResponseHandler responseHandler) {
+
+        RequestParams params = new RequestParams();
+
+        // 创建参数Map
+        Map<String, Object> mapParam = new HashMap<String, Object>();
+        mapParam.put(PARAM_ACTION, ACTION_GETORDER);
+        mapParam.put("username", user.getUsername());
+        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("time", getCurrentTimeFormat());
+        mapParam.put("orderno", orderNo);
+
+        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+    }
+
+    /**
+     * 到达签到
+     * @param user - 用户对象
+     * @param responseHandler
+     */
+    public void signArrival(UserData user,
+                            AsyncHttpResponseHandler responseHandler) {
+
+        RequestParams params = new RequestParams();
+
+        // 创建参数Map
+        Map<String, Object> mapParam = new HashMap<String, Object>();
+        mapParam.put(PARAM_ACTION, ACTION_SIGN);
+        mapParam.put("username", user.getUsername());
+        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," + CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("time", getCurrentTimeFormat());
+
+        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+    }
 
     /**
      * POST方式发送请求
@@ -207,14 +303,24 @@ public class API_Manager {
      */
     private void sendToServiceByPost(String serviceAPIURL,
                                      RequestParams params,
+                                     Map<String, Object> mapParam,
                                      AsyncHttpResponseHandler responseHandler) {
 
-        AsyncHttpClient client = new AsyncHttpClient();
+        try {
+            // encode XML数据
+            String strDataEncoded = URLEncoder.encode(createParamXML(mapParam), "UTF-8");
+            params.put("data", strDataEncoded);
 
-        client.setTimeout(mnTimeout);
-        client.setResponseTimeout(mnTimeout);
-        client.setConnectTimeout(mnTimeout);
+            AsyncHttpClient client = new AsyncHttpClient();
 
-        client.post(serviceAPIURL, null, responseHandler);
+//            client.setTimeout(mnTimeout);
+//            client.setResponseTimeout(mnTimeout);
+//            client.setConnectTimeout(mnTimeout);
+
+            client.post(serviceAPIURL, params, responseHandler);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 }
