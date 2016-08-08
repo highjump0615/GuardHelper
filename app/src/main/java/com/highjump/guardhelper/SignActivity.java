@@ -22,9 +22,13 @@ import com.highjump.guardhelper.api.ApiResult;
 import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
 import com.highjump.guardhelper.utils.Config;
-import com.loopj.android.http.TextHttpResponseHandler;
 
-import cz.msebera.android.httpclient.Header;
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 
 public class SignActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -140,38 +144,51 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
         // 调用相应的API
         API_Manager.getInstance().signArrival(
                 mCurrentUser,
-                new TextHttpResponseHandler() {
+                new Callback() {
                     @Override
-                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                        CommonUtils.createErrorAlertDialog(SignActivity.this, Config.STR_CONNET_FAIL, throwable.getMessage()).show();
-                    }
-
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                    public void onFailure(Call call, final IOException e) {
                         mProgressDialog.dismiss();
 
-                        try {
-                            // 获取返回数据
-                            ApiResult resultObj = new ApiResult(responseString);
-
-                            if (Integer.parseInt(resultObj.getResult()) < 1) {
-                                CommonUtils.createErrorAlertDialog(SignActivity.this, "签到失败！").show();
-                                return;
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                CommonUtils.createErrorAlertDialog(SignActivity.this, Config.STR_CONNET_FAIL, e.getMessage()).show();
                             }
-
-                            // 更新定位时间间隔
-                            CommonUtils.mnLocationInterval = Config.LOCATION_INTERVAL_AFTER_SIGN;
-
-                            // 跳转到主页面
-                            CommonUtils.moveNextActivity(SignActivity.this, MainActivity.class, true);
-                        }
-                        catch (Exception e) {
-                            // 解析失败
-                            CommonUtils.createErrorAlertDialog(SignActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
-                        }
+                        });
                     }
-                }
-        );
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        mProgressDialog.dismiss();
+
+                        // 获取返回数据
+                        final ApiResult resultObj = new ApiResult(response.body().string());
+
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (Integer.parseInt(resultObj.getResult()) < 1) {
+                                        CommonUtils.createErrorAlertDialog(SignActivity.this, "签到失败！").show();
+                                        return;
+                                    }
+
+                                    // 更新定位时间间隔
+                                    CommonUtils.mnLocationInterval = Config.LOCATION_INTERVAL_AFTER_SIGN;
+
+                                    // 返回主页面
+                                    onBackPressed();
+                                }
+                                catch (Exception e) {
+                                    // 解析失败
+                                    CommonUtils.createErrorAlertDialog(SignActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
+                                }
+                            }
+                        });
+                    }
+                });
     }
 
 }

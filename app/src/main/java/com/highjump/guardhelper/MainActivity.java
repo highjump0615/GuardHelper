@@ -1,12 +1,18 @@
 package com.highjump.guardhelper;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -35,12 +41,14 @@ import com.highjump.guardhelper.model.ReportData;
 import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
 import com.highjump.guardhelper.utils.Config;
-import com.highjump.guardhelper.utils.TencentGPSTracker;
-import com.loopj.android.http.TextHttpResponseHandler;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
-import cz.msebera.android.httpclient.Header;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
@@ -120,7 +128,7 @@ public class MainActivity extends AppCompatActivity
         mLayoutMore = (RelativeLayout) findViewById(R.id.layout_more);
 
         // 列表设置
-        mRecyclerView = (RecyclerView)findViewById(R.id.list);
+        mRecyclerView = (RecyclerView) findViewById(R.id.list);
 
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -129,54 +137,61 @@ public class MainActivity extends AppCompatActivity
         mRecyclerView.setAdapter(mAdapter);
 
         // 定时请求命令
-        mHandlerTimerOrder.postDelayed(mRunnableQueryOrder, Config.QUERY_ORDER_INTERVAL);         // 开始 Timer
+        mHandlerTimerOrder.postDelayed(mRunnableQueryOrder, Config.QUERY_ORDER_INTERVAL);
         // 定时上报位置
-        mHandlerTimerLocation.postDelayed(mRunnableLocation, CommonUtils.mnLocationInterval);         // 开始 Timer
+        mHandlerTimerLocation.postDelayed(mRunnableLocation, CommonUtils.mnLocationInterval);
 
         // 开始定位
-        if (CommonUtils.mTencentGPSTracker == null) {
-            CommonUtils.mTencentGPSTracker = new TencentGPSTracker(this);
-        }
-
-        CommonUtils.mTencentGPSTracker.startLocation();
+        initLocation();
     }
 
     /**
      * 请求命令线程
      */
-    private Runnable mRunnableQueryOrder = new Runnable( ) {
-        public void run ( ) {
+    private Runnable mRunnableQueryOrder = new Runnable() {
+        public void run() {
 
             // 调用请求命令API
             API_Manager.getInstance().queryOrder(
                     mCurrentUser,
-                    new TextHttpResponseHandler() {
+                    new Callback() {
                         @Override
-                        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                            Toast.makeText(MainActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                        public void onFailure(Call call, final IOException e) {
+                            // UI线程上运行
+                            runOnUiThread(new Runnable() {
+                                              @Override
+                                              public void run() {
+                                                  Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                              }
+                                          });
 
                             mHandlerTimerOrder.postDelayed(mRunnableQueryOrder, Config.QUERY_ORDER_INTERVAL);     // 安排一个Runnable对象到主线程队列中
                         }
 
                         @Override
-                        public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                        public void onResponse(Call call, final Response response) throws IOException {
+                            // UI线程上运行
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // 获取返回数据
+                                    try {
+                                        ApiResult resultObj = new ApiResult(response.body().string());
 
-                            // 获取返回数据
-                            ApiResult resultObj = new ApiResult(responseString);
+                                        if (Integer.parseInt(resultObj.getResult()) < 1) {
+                                            Toast.makeText(MainActivity.this, "没有命令", Toast.LENGTH_SHORT).show();
+                                            return;
+                                        }
 
-                            try {
-                                if (Integer.parseInt(resultObj.getResult()) < 1) {
-                                    Toast.makeText(MainActivity.this, "没有命令", Toast.LENGTH_SHORT).show();
-                                    return;
+                                        // 获取命令
+                                        getOrder(resultObj.getNodeData("orderno"));
+                                    }
+                                    catch (Exception e) {
+                                        // 解析失败
+                                        Toast.makeText(MainActivity.this, "获取命令失败！", Toast.LENGTH_SHORT).show();
+                                    }
                                 }
-
-                                // 获取命令
-                                getOrder(resultObj.getNodeData("orderno"));
-                            }
-                            catch (NumberFormatException e) {
-                                // 解析失败
-                                Toast.makeText(MainActivity.this, "获取命令失败！", Toast.LENGTH_SHORT).show();
-                            }
+                            });
 
                             mHandlerTimerOrder.postDelayed(mRunnableQueryOrder, Config.QUERY_ORDER_INTERVAL);     // 安排一个Runnable对象到主线程队列中
                         }
@@ -190,20 +205,19 @@ public class MainActivity extends AppCompatActivity
     /**
      * 上报位置线程
      */
-    private Runnable mRunnableLocation = new Runnable( ) {
-        public void run ( ) {
-
+    private Runnable mRunnableLocation = new Runnable() {
+        public void run() {
             // 调用请求命令API
             API_Manager.getInstance().reportLocation(
                     mCurrentUser,
-                    new TextHttpResponseHandler() {
+                    new Callback() {
                         @Override
-                        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                        public void onFailure(Call call, IOException e) {
                             mHandlerTimerLocation.postDelayed(mRunnableLocation, CommonUtils.mnLocationInterval);
                         }
 
                         @Override
-                        public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                        public void onResponse(Call call, Response response) throws IOException {
                             mHandlerTimerLocation.postDelayed(mRunnableLocation, CommonUtils.mnLocationInterval);
                         }
                     }
@@ -220,9 +234,13 @@ public class MainActivity extends AppCompatActivity
         mHandlerTimerLocation.removeCallbacks(mRunnableLocation);
 
         // 停止定位
-        if (CommonUtils.mTencentGPSTracker != null) {
-            CommonUtils.mTencentGPSTracker.stopTracker();
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
         }
+        locationManager.removeUpdates(mLocationListener);
     }
 
     @Override
@@ -260,12 +278,10 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_sign) {
             // 跳转到签到页面
             CommonUtils.moveNextActivity(this, SignActivity.class, false);
-        }
-        else if (id == R.id.nav_setting) {
+        } else if (id == R.id.nav_setting) {
             // 跳转到设置页面
             CommonUtils.moveNextActivity(this, SettingActivity.class, false);
-        }
-        else if (id == R.id.nav_exit) {
+        } else if (id == R.id.nav_exit) {
             // 跳转到退出页面
             CommonUtils.moveNextActivity(this, ExitActivity.class, false);
         }
@@ -303,8 +319,7 @@ public class MainActivity extends AppCompatActivity
 
             // 隐藏键盘
             dismissKeyboard();
-        }
-        else {
+        } else {
             // 隐藏
             mLayoutMore.setVisibility(View.GONE);
         }
@@ -337,27 +352,39 @@ public class MainActivity extends AppCompatActivity
         API_Manager.getInstance().reportData(
                 mCurrentUser,
                 data,
-                new TextHttpResponseHandler() {
+                new Callback() {
                     @Override
-                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                        CommonUtils.createErrorAlertDialog(MainActivity.this, "Error", throwable.getMessage()).show();
+                    public void onFailure(Call call, final IOException e) {
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                CommonUtils.createErrorAlertDialog(MainActivity.this, "Error", e.getMessage()).show();
+                            }
+                        });
                     }
 
                     @Override
-                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                        // 获取返回数据
-                        ApiResult resultObj = new ApiResult(responseString);
+                    public void onResponse(Call call, final Response response) throws IOException {
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    // 获取返回数据
+                                    ApiResult resultObj = new ApiResult(response.body().string());
 
-                        try {
-                            if (Integer.parseInt(resultObj.getResult()) < 1) {
-                                CommonUtils.createErrorAlertDialog(MainActivity.this, "上报失败").show();
-                                return;
+                                    if (Integer.parseInt(resultObj.getResult()) < 1) {
+                                        CommonUtils.createErrorAlertDialog(MainActivity.this, "上报失败").show();
+                                        return;
+                                    }
+                                }
+                                catch (Exception e) {
+                                    // 解析失败
+                                    CommonUtils.createErrorAlertDialog(MainActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
+                                }
                             }
-                        }
-                        catch (Exception e) {
-                            // 解析失败
-                            CommonUtils.createErrorAlertDialog(MainActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
-                        }
+                        });
                     }
                 });
     }
@@ -386,18 +413,30 @@ public class MainActivity extends AppCompatActivity
         API_Manager.getInstance().getOrder(
                 mCurrentUser,
                 orderNo,
-                new TextHttpResponseHandler() {
+                new Callback() {
                     @Override
-                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                        Toast.makeText(MainActivity.this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                    public void onFailure(Call call, final IOException e) {
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
 
                     @Override
-                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
-
+                    public void onResponse(Call call, Response response) throws IOException {
                         // 获取返回数据
-                        ApiResult resultObj = new ApiResult(responseString);
-                        processReceive(resultObj);
+                        final ApiResult resultObj = new ApiResult(response.body().string());
+
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                processReceive(resultObj);
+                            }
+                        });
                     }
                 }
         );
@@ -406,7 +445,6 @@ public class MainActivity extends AppCompatActivity
     private void processReceive(ApiResult resultObj) {
 
         try {
-
             // information
             String strInfo = resultObj.getNodeData("information");
             if (TextUtils.isEmpty(strInfo)) {
@@ -458,11 +496,81 @@ public class MainActivity extends AppCompatActivity
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.notify(100, notification);
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // 解析失败
             Toast.makeText(MainActivity.this, "获取下发信息失败！解析错误", Toast.LENGTH_SHORT).show();
         }
     }
 
+    private void initLocation() {
+
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        boolean bGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        Location location = null;
+        String strProvider = "";
+
+        // 检查有没有定位方面的权限
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+
+            Toast.makeText(MainActivity.this, "没有获取定位权限", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (bGpsEnabled) {
+            strProvider = LocationManager.GPS_PROVIDER;
+            location = locationManager.getLastKnownLocation(strProvider);
+        }
+
+        updateNewLocation(location);
+
+        if (strProvider.length() > 0) {
+            locationManager.requestLocationUpdates(strProvider, 3000/*时间间隔*/, 0, mLocationListener);
+        }
+    }
+
+    private final LocationListener mLocationListener = new LocationListener() {
+        public void onLocationChanged(Location location) {
+            updateNewLocation(location);
+        }
+
+        public void onProviderDisabled(String provider) {
+            updateNewLocation(null);
+        }
+
+        public void onProviderEnabled(String provider) {
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+    };
+
+    private void updateNewLocation(Location location) {
+
+        if (location != null) {
+            CommonUtils.mCurrentLocation = location;
+//            Toast.makeText(MainActivity.this, "位置：" + location.getLatitude() + "," + location.getLongitude(), Toast.LENGTH_LONG).show();
+        }
+        else {
+            /*if (BuildConfig.DEBUG) {
+                location = new Location("reverseGeocoded");
+                location.setLongitude(115.25);
+                location.setLatitude(39.26);
+
+                CommonUtils.mCurrentLocation = location;
+            }*/
+
+//            Toast.makeText(MainActivity.this, "无法定位", Toast.LENGTH_LONG).show();
+        }
+    }
 }

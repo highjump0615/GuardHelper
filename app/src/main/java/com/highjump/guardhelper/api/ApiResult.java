@@ -81,6 +81,8 @@ public class ApiResult {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (Exception e) {     // 有可能没有result这个节点，所以设置异常处理
+            e.printStackTrace();
         }
     }
 

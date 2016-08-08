@@ -3,10 +3,14 @@ package com.highjump.guardhelper;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -20,9 +24,13 @@ import com.highjump.guardhelper.api.ApiResult;
 import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
 import com.highjump.guardhelper.utils.Config;
-import com.loopj.android.http.TextHttpResponseHandler;
 
-import cz.msebera.android.httpclient.Header;
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -57,6 +65,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         // 初始化
         Config.initConfig(this);
+
+        openGPSSettings();
     }
 
     @Override
@@ -107,42 +117,82 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         API_Manager.getInstance().userLogin(
                 mStrUsername,
                 mStrPassword,
-                new TextHttpResponseHandler() {
+                new Callback() {
                     @Override
-                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                    public void onFailure(Call call, final IOException e) {
                         mProgressDialog.dismiss();
-                        CommonUtils.createErrorAlertDialog(LoginActivity.this, Config.STR_CONNET_FAIL, throwable.getMessage()).show();
+
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                CommonUtils.createErrorAlertDialog(LoginActivity.this, Config.STR_CONNET_FAIL, e.getMessage()).show();
+                            }
+                        });
                     }
 
                     @Override
-                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                        mProgressDialog.dismiss();
+                    public void onResponse(Call call, final Response response) throws IOException {
+                        // UI线程上运行
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    // 获取返回数据
+                                    ApiResult resultObj = new ApiResult(response.body().string());
 
-                        try {
-                            // 获取返回数据
-                            ApiResult resultObj = new ApiResult(responseString);
+                                    if (Integer.parseInt(resultObj.getResult()) < 1) {
+                                        CommonUtils.createErrorAlertDialog(LoginActivity.this, mstrNotMatch).show();
+                                        return;
+                                    }
 
-                            if (Integer.parseInt(resultObj.getResult()) < 1) {
-                                CommonUtils.createErrorAlertDialog(LoginActivity.this, mstrNotMatch).show();
-                                return;
+                                    gotoMain();
+
+                                    mProgressDialog.dismiss();
+                                }
+                                catch (Exception e) {
+                                    // 解析失败
+                                    CommonUtils.createErrorAlertDialog(LoginActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
+                                }
                             }
-
-                            gotoMain();
-                        }
-                        catch (Exception e) {
-                            // 解析失败
-                            CommonUtils.createErrorAlertDialog(LoginActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
-                        }
+                        });
                     }
                 }
         );
     }
 
+    /**
+     * 跳转到主页面
+     */
     private void gotoMain() {
         // 设置当前用户
         new UserData(mStrUsername);
 
-        // 跳转到签到页面
+        // 跳转到主页面
         CommonUtils.moveNextActivity(LoginActivity.this, MainActivity.class, true);
+    }
+
+    /**
+     * 检查GPS设置
+     */
+    private void openGPSSettings() {
+        LocationManager locationManager = (LocationManager) this.getSystemService(LOCATION_SERVICE);
+        if (locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
+            return;
+        }
+
+        AlertDialog alert = new AlertDialog.Builder(this)
+                .setTitle("")
+                .setMessage("使用警卫助手，必须要先打开GPS定位")
+                .setCancelable(false)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivity(intent);
+                    }
+                }).create();
+
+        alert.show();
     }
 }

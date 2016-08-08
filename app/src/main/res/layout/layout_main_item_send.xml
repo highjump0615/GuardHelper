@@ -13,20 +13,43 @@
         android:layout_gravity="center_horizontal"
         android:text="2016/07/24 22:30"/>
 
-    <RelativeLayout
-        android:id="@+id/layout_chat_item"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:background="@drawable/bubble_classic_blue">
+        android:layout_gravity="right"
+        android:layout_marginLeft="@dimen/main_item_margin_hori">
 
-        <TextView
-            android:id="@+id/text_msg"
+        <ProgressBar
+            android:id="@+id/progress_send"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="502有窗户未关请求信息指导\n有情况！ 请上前看看" />
+            android:layout_gravity="center_vertical"
+            style="?android:progressBarStyleSmall"/>
 
-    </RelativeLayout>
+        <ImageView
+            android:id="@+id/imgview_fail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/indicator_input_error" />
+
+        <!-- 气泡试图 -->
+        <RelativeLayout
+            android:id="@+id/layout_chat_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/main_item_margin_progress"
+            android:background="@drawable/bubble_classic_blue">
+
+            <TextView
+                android:id="@+id/text_msg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="502有窗户未关请求信息指导\n有情况！ 请上前看看" />
+
+        </RelativeLayout>
+
+    </LinearLayout>
 
 
 </LinearLayout>

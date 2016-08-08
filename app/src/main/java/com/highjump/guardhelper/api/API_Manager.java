@@ -3,9 +3,6 @@ package com.highjump.guardhelper.api;
 import com.highjump.guardhelper.model.ReportData;
 import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -33,6 +30,13 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okio.Buffer;
+
 /**
  * Created by Administrator on 2016/7/26.
  */
@@ -55,7 +59,7 @@ public class API_Manager {
     private final String PARAM_DATA = "data";
 
     // 时限 (毫秒)
-//    private int mnTimeout = 60000;
+    private int mnTimeout = 20000;
 
     // 实例； 第一次被调用的时候会设置
     private static API_Manager mInstance = null;
@@ -178,17 +182,14 @@ public class API_Manager {
      */
     public void userLogin(String username,
                           String userpassword,
-                          AsyncHttpResponseHandler responseHandler) {
-
-        RequestParams params = new RequestParams();
-
+                          Callback responseCallback) {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_LOGIN);
         mapParam.put("username", username);
         mapParam.put("password", CommonUtils.getMD5EncryptedString(userpassword));
 
-        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+        sendToServiceByPost(API_PATH, mapParam, responseCallback);
     }
 
     /**
@@ -198,20 +199,17 @@ public class API_Manager {
      */
     public void reportData(UserData user,
                            ReportData data,
-                           AsyncHttpResponseHandler responseHandler) {
-
-        RequestParams params = new RequestParams();
-
+                           Callback responseCallback) {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_REPORTDATA);
         mapParam.put("username", user.getUsername());
-        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", data.getTime());
         mapParam.put("information", data.getData());
         mapParam.put("datatype", data.getType());
 
-        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+        sendToServiceByPost(API_PATH, mapParam, responseCallback);
     }
 
     /**
@@ -219,105 +217,93 @@ public class API_Manager {
      * @param user - 用户对象
      */
     public void reportLocation(UserData user,
-                               AsyncHttpResponseHandler responseHandler) {
-
-        RequestParams params = new RequestParams();
-
+                               Callback responseCallback) {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_REPORTLOCATION);
         mapParam.put("username", user.getUsername());
-        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", getCurrentTimeFormat());
 
-        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+        sendToServiceByPost(API_PATH, mapParam, responseCallback);
     }
 
     /**
      * 请求命令
      * @param user - 用户对象
-     * @param responseHandler
      */
     public void queryOrder(UserData user,
-                           AsyncHttpResponseHandler responseHandler) {
-
-        RequestParams params = new RequestParams();
-
+                           Callback responseCallback) {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_QUERYORDER);
         mapParam.put("username", user.getUsername());
-        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", getCurrentTimeFormat());
 
-        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+        sendToServiceByPost(API_PATH, mapParam, responseCallback);
     }
 
     /**
      * 获取命令
      * @param user - 用户对象
      * @param orderNo - 命令编号
-     * @param responseHandler
      */
     public void getOrder(UserData user,
                          String orderNo,
-                         AsyncHttpResponseHandler responseHandler) {
-
-        RequestParams params = new RequestParams();
-
+                         Callback responseCallback) {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_GETORDER);
         mapParam.put("username", user.getUsername());
-        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," +CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", getCurrentTimeFormat());
         mapParam.put("orderno", orderNo);
 
-        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+        sendToServiceByPost(API_PATH, mapParam, responseCallback);
     }
 
     /**
      * 到达签到
      * @param user - 用户对象
-     * @param responseHandler
      */
     public void signArrival(UserData user,
-                            AsyncHttpResponseHandler responseHandler) {
-
-        RequestParams params = new RequestParams();
-
+                            Callback responseCallback) {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_SIGN);
         mapParam.put("username", user.getUsername());
-        mapParam.put("location", CommonUtils.mTencentGPSTracker.getLongitude() + "," + CommonUtils.mTencentGPSTracker.getLatitude());
+        mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", getCurrentTimeFormat());
 
-        sendToServiceByPost(API_PATH, params, mapParam, responseHandler);
+        sendToServiceByPost(API_PATH, mapParam, responseCallback);
     }
 
     /**
      * POST方式发送请求
      * @param serviceAPIURL - API Url
-     * @param params - 参数
+     * @param mapParam - 参数键值数组
      */
     private void sendToServiceByPost(String serviceAPIURL,
-                                     RequestParams params,
                                      Map<String, Object> mapParam,
-                                     AsyncHttpResponseHandler responseHandler) {
+                                     Callback responseCallback) {
 
         try {
-            // encode XML数据
+            // encode XML数据\
             String strDataEncoded = URLEncoder.encode(createParamXML(mapParam), "UTF-8");
-            params.put("data", strDataEncoded);
 
-            AsyncHttpClient client = new AsyncHttpClient();
+            // 构建参数
+            FormBody formParam = new FormBody.Builder()
+                    .add("data", strDataEncoded)
+                    .build();
 
-//            client.setTimeout(mnTimeout);
-//            client.setResponseTimeout(mnTimeout);
-//            client.setConnectTimeout(mnTimeout);
+            Request request = new Request.Builder()
+                    .url(serviceAPIURL)
+                    .post(formParam)
+                    .build();
 
-            client.post(serviceAPIURL, params, responseHandler);
+            OkHttpClient client = new OkHttpClient();
+            client.newCall(request).enqueue(responseCallback);
 
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();

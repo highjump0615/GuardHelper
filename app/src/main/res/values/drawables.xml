@@ -2,5 +2,4 @@
     <item name="ic_menu_sign" type="drawable">@android:drawable/ic_menu_edit</item>
     <item name="ic_menu_setting" type="drawable">@android:drawable/ic_menu_manage</item>
     <item name="ic_menu_exit" type="drawable">@android:drawable/ic_menu_close_clear_cancel</item>
-
 </resources>

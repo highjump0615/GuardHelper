@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 
 import com.highjump.guardhelper.api.API_Manager;
 
@@ -17,10 +18,33 @@ import java.security.NoSuchAlgorithmException;
  */
 public class CommonUtils {
 
-    public static TencentGPSTracker mTencentGPSTracker = null;
-
     // 上报位置时间间隔
     public static int mnLocationInterval = Config.LOCATION_INTERVAL_BEFORE_SIGN;
+
+    // 当前位置
+    public static Location mCurrentLocation = null;
+
+    // 获取经度
+    public static double getLongitude() {
+        double dLongitude = 0;
+
+        if (mCurrentLocation != null) {
+            dLongitude = mCurrentLocation.getLongitude();
+        }
+
+        return dLongitude;
+    }
+
+    // 获取纬度
+    public static double getLatitude() {
+        double dLatitude = 0;
+
+        if (mCurrentLocation != null) {
+            dLatitude = mCurrentLocation.getLatitude();
+        }
+
+        return dLatitude;
+    }
 
     /**
      * 获取md5加密字符串
