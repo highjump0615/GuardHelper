@@ -35,11 +35,51 @@
         android:layout_height="wrap_content"
         android:inputType="text"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/setting_margin_top"
+        android:text="上报定位地址："/>
+    <EditText
+        android:id="@+id/edit_locationaddr"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="定时获取命令周期："/>
+        <EditText
+            android:id="@+id/edit_orderinterval"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="定时上报定位周期："/>
+        <EditText
+            android:id="@+id/edit_locationinterval"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"/>
+    </LinearLayout>
+
     <Button
         android:id="@+id/but_set"
         android:layout_width="match_parent"
         android:layout_height="@dimen/login_but_height"
-        android:layout_marginTop="@dimen/sign_but_margin_top"
+        android:layout_marginTop="30dp"
         android:text="确 定"
         android:textSize="@dimen/login_but_text_size"  />
 

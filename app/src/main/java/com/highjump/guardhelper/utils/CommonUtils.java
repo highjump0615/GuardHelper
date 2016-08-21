@@ -5,10 +5,19 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
+import android.util.Base64;
 
+import com.baidu.location.BDLocation;
 import com.highjump.guardhelper.api.API_Manager;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -18,11 +27,10 @@ import java.security.NoSuchAlgorithmException;
  */
 public class CommonUtils {
 
-    // 上报位置时间间隔
-    public static int mnLocationInterval = Config.LOCATION_INTERVAL_BEFORE_SIGN;
-
     // 当前位置
-    public static Location mCurrentLocation = null;
+    public static BDLocation mCurrentLocation = null;
+
+    private static MediaPlayer mMediaPlayer;
 
     // 获取经度
     public static double getLongitude() {
@@ -106,5 +114,138 @@ public class CommonUtils {
         if (removeSource) {
             source.finish();
         }
+    }
+
+    /**
+     * 得到视频缩略图
+     * @param filePath - 视频路径
+     * @return
+     */
+    public static Bitmap getVideoThumbnail(String filePath) {
+        Bitmap bitmap = null;
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(filePath);
+            bitmap = retriever.getFrameAtTime();
+        }
+        catch(IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                retriever.release();
+            }
+            catch (RuntimeException e) {
+                e.printStackTrace();
+            }
+        }
+        return bitmap;
+    }
+
+    // 播放asset的音频
+    public static void playSound(Context context, String fileName) {
+        try {
+            AssetFileDescriptor descriptor = context.getAssets().openFd(fileName);
+            long start = descriptor.getStartOffset();
+            long end = descriptor.getLength();
+
+            if (mMediaPlayer == null)
+                mMediaPlayer = new MediaPlayer();
+            else
+                mMediaPlayer.reset();
+
+            mMediaPlayer.setDataSource(descriptor.getFileDescriptor(), start, end);
+
+            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mediaPlayer, int i, int i2) {
+                    if (mediaPlayer != null) {
+                        mediaPlayer.reset();
+                    }
+                    return false;
+                }
+            });
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    if (mediaPlayer != null) {
+                        mediaPlayer.reset();
+                    }
+                }
+            });
+            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+
+                }
+            });
+            mMediaPlayer.setOnVideoSizeChangedListener(new MediaPlayer.OnVideoSizeChangedListener() {
+                @Override
+                public void onVideoSizeChanged(MediaPlayer mediaPlayer, int i, int i2) {
+
+                }
+            });
+
+            mMediaPlayer.prepare();
+            mMediaPlayer.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 停止播放音频
+     */
+    public static void stopSound() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+            mMediaPlayer.reset();
+        }
+    }
+
+
+    /**
+     * bitmap转base64
+     */
+    public static String bitmapToBase64(Bitmap bitmap) {
+        String result = "";
+        ByteArrayOutputStream bos=null;
+
+        try {
+            if(null != bitmap){
+                bos = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos); //将bitmap放入字节数组流中
+
+                bos.flush(); //将bos流缓存在内存中的数据全部输出，清空缓存
+                bos.close();
+
+                byte []bitmapByte = bos.toByteArray();
+                result = Base64.encodeToString(bitmapByte, Base64.DEFAULT);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally{
+            try {
+                bos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * base64转bitmap
+     */
+    public static Bitmap base64ToBitmap(String base64String){
+        byte[] bytes = Base64.decode(base64String, Base64.DEFAULT);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        return bitmap;
     }
 }

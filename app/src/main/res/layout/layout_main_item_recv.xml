@@ -25,6 +25,12 @@
             android:layout_height="wrap_content"
             android:text="502有窗户未关请求信息指导\n有情况！ 请上前看看" />
 
+        <ImageView
+            android:id="@+id/imgview_msg"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:scaleType="fitXY" />
+
     </RelativeLayout>
 
 

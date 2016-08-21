@@ -42,9 +42,9 @@ import okio.Buffer;
  */
 public class API_Manager {
 
-    private static String API_PATH = "http://192.168.1.113/guardhelper/";
-    private static String API_PATH_DATA = "http://192.168.1.113/guardhelper/";
-    private static String API_PATH_ORDER = "http://192.168.1.113/guardhelper/";
+    private static String API_PATH_DATA = "http://123.118.218.249:3390/HDFJ_APP/App_API.jsp";
+    private static String API_PATH_ORDER = "http://123.118.218.249:3390/App_API_QueryOrder.jsp";
+    private static String API_PATH_LOCATION = "http://123.118.218.249:3390/HDFJ_APP/App_API_ReportLocation.jsp";
 
     // API功能
     private final String ACTION_LOGIN = "login";
@@ -91,15 +91,21 @@ public class API_Manager {
     }
 
     public static void setOrderApiPath(String path) {
-        API_PATH = path;
         API_PATH_ORDER = path;
     }
 
+    public static String getLocationApiPath() {
+        return API_PATH_LOCATION;
+    }
 
-    public static void setApiPath(String urlData, String urlOrder) {
-        API_PATH = urlOrder;
+    public static void setLocationApiPath(String path) {
+        API_PATH_LOCATION = path;
+    }
+
+    public static void setApiPath(String urlData, String urlOrder, String urlLocation) {
         API_PATH_DATA = urlData;
         API_PATH_ORDER = urlOrder;
+        API_PATH_LOCATION = urlLocation;
     }
 
     /**
@@ -189,7 +195,7 @@ public class API_Manager {
         mapParam.put("username", username);
         mapParam.put("password", CommonUtils.getMD5EncryptedString(userpassword));
 
-        sendToServiceByPost(API_PATH, mapParam, responseCallback);
+        sendToServiceByPost(API_PATH_DATA, mapParam, responseCallback);
     }
 
     /**
@@ -206,10 +212,18 @@ public class API_Manager {
         mapParam.put("username", user.getUsername());
         mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", data.getTime());
-        mapParam.put("information", data.getData());
+
+        if (data.getType() == ReportData.REPORT_TEXT) {
+            mapParam.put("information", data.getStringData());
+        }
+        else if (data.getType() == ReportData.REPORT_IMAGE) {
+            String strBase64 = CommonUtils.bitmapToBase64(data.getBitmapData());
+            mapParam.put("information", strBase64);
+        }
+
         mapParam.put("datatype", data.getType());
 
-        sendToServiceByPost(API_PATH, mapParam, responseCallback);
+        sendToServiceByPost(API_PATH_DATA, mapParam, responseCallback);
     }
 
     /**
@@ -225,7 +239,7 @@ public class API_Manager {
         mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", getCurrentTimeFormat());
 
-        sendToServiceByPost(API_PATH, mapParam, responseCallback);
+        sendToServiceByPost(API_PATH_LOCATION, mapParam, responseCallback);
     }
 
     /**
@@ -241,7 +255,7 @@ public class API_Manager {
         mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
         mapParam.put("time", getCurrentTimeFormat());
 
-        sendToServiceByPost(API_PATH, mapParam, responseCallback);
+        sendToServiceByPost(API_PATH_ORDER, mapParam, responseCallback);
     }
 
     /**
@@ -260,23 +274,33 @@ public class API_Manager {
         mapParam.put("time", getCurrentTimeFormat());
         mapParam.put("orderno", orderNo);
 
-        sendToServiceByPost(API_PATH, mapParam, responseCallback);
+        sendToServiceByPost(API_PATH_DATA, mapParam, responseCallback);
     }
 
     /**
      * 到达签到
      * @param user - 用户对象
+     * @param site - 位置
+     * @param floor - 楼层
      */
     public void signArrival(UserData user,
+                            int site,
+                            int floor,
                             Callback responseCallback) {
         // 创建参数Map
         Map<String, Object> mapParam = new HashMap<String, Object>();
         mapParam.put(PARAM_ACTION, ACTION_SIGN);
         mapParam.put("username", user.getUsername());
         mapParam.put("location", CommonUtils.getLongitude() + "," + CommonUtils.getLatitude());
+        mapParam.put("site", site);
+
+        if (site == 1) {    // 制高点
+            mapParam.put("floor", floor);
+        }
+
         mapParam.put("time", getCurrentTimeFormat());
 
-        sendToServiceByPost(API_PATH, mapParam, responseCallback);
+        sendToServiceByPost(API_PATH_DATA, mapParam, responseCallback);
     }
 
     /**

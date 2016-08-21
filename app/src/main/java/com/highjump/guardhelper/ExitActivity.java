@@ -67,11 +67,6 @@ public class ExitActivity extends AppCompatActivity implements View.OnClickListe
      * 销毁数据而推出
      */
     private void doExit() {
-
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(LoginActivity.IS_EXIT, true);
-
-        startActivity(intent);
+        ((GHApplication)getApplication()).finishApp();
     }
 }

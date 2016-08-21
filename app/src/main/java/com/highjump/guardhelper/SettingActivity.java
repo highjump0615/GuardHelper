@@ -23,11 +23,10 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
 
     private EditText mEditDataAddr;
     private EditText mEditOrderAddr;
+    private EditText mEditLocationAddr;
 
-    // 上报数据地址
-    private String mStrDataAddr;
-    // 请求命令地址
-    private String mStrOrderAddr;
+    private EditText mEditIntevalOrder;
+    private EditText mEditIntevalLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,9 +58,15 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         // 输入框
         mEditDataAddr = (EditText)findViewById(R.id.edit_uploadaddr);
         mEditOrderAddr = (EditText)findViewById(R.id.edit_orderaddr);
+        mEditLocationAddr = (EditText)findViewById(R.id.edit_locationaddr);
+        mEditIntevalOrder = (EditText)findViewById(R.id.edit_orderinterval);
+        mEditIntevalLocation = (EditText)findViewById(R.id.edit_locationinterval);
 
         mEditDataAddr.setText(API_Manager.getDataApiPath());
         mEditOrderAddr.setText(API_Manager.getOrderApiPath());
+        mEditLocationAddr.setText(API_Manager.getLocationApiPath());
+        mEditIntevalOrder.setText("" + Config.QUERY_ORDER_INTERVAL);
+        mEditIntevalLocation.setText("" + Config.LOCATION_INTERVAL);
 
         // 确定按钮
         Button button = (Button) findViewById(R.id.but_set);
@@ -86,26 +91,52 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
      * 设置参数
      */
     private void doSetting() {
-        mStrDataAddr = mEditDataAddr.getText().toString();
-        mStrOrderAddr = mEditOrderAddr.getText().toString();
+        String strDataAddr = mEditDataAddr.getText().toString();
+        String strOrderAddr = mEditOrderAddr.getText().toString();
+        String strLocationAddr = mEditLocationAddr.getText().toString();
+
+        String strIntervalOrder = mEditIntevalOrder.getText().toString();
+        String strIntervalLocation = mEditIntevalLocation.getText().toString();
 
         // 检查输入是否合适
-        if (TextUtils.isEmpty(mStrDataAddr)) {
+        if (TextUtils.isEmpty(strDataAddr)) {
             CommonUtils.createErrorAlertDialog(this, "请输入上报数据地址").show();
             return;
         }
-        if (TextUtils.isEmpty(mStrOrderAddr)) {
+        if (TextUtils.isEmpty(strOrderAddr)) {
             CommonUtils.createErrorAlertDialog(this, "请输入请求命令地址").show();
             return;
         }
+        if (TextUtils.isEmpty(strLocationAddr)) {
+            CommonUtils.createErrorAlertDialog(this, "请输入上报定位地址").show();
+            return;
+        }
 
-        API_Manager.setApiPath(mStrDataAddr, mStrOrderAddr);
+        if (TextUtils.isEmpty(strIntervalOrder)) {
+            CommonUtils.createErrorAlertDialog(this, "请输入获取命令周期").show();
+            return;
+        }
+        if (TextUtils.isEmpty(strIntervalLocation)) {
+            CommonUtils.createErrorAlertDialog(this, "请输入上报定位周期").show();
+            return;
+        }
+
+        API_Manager.setApiPath(strDataAddr, strOrderAddr, strLocationAddr);
+
+        Config.QUERY_ORDER_INTERVAL = Integer.parseInt(strIntervalOrder);
+        Config.LOCATION_INTERVAL = Integer.parseInt(strIntervalLocation);
 
         // Save user phone and flag of signed into NSUserDefaults
         SharedPreferences preferences = getSharedPreferences(Config.PREF_NAME, Context.MODE_PRIVATE);
         final SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(Config.PREF_URL_DATA, mStrDataAddr);
-        editor.putString(Config.PREF_URL_ORDER, mStrOrderAddr);
+
+        editor.putString(Config.PREF_URL_DATA, strDataAddr);
+        editor.putString(Config.PREF_URL_ORDER, strOrderAddr);
+        editor.putString(Config.PREF_URL_LOCATION, strLocationAddr);
+
+        editor.putInt(Config.PREF_INTERVAL_QUERYORDER, Config.QUERY_ORDER_INTERVAL);
+        editor.putInt(Config.PREF_INTERVAL_LOCATION, Config.LOCATION_INTERVAL);
+
         new Thread(new Runnable() {
             @Override
             public void run() {

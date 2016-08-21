@@ -29,9 +29,9 @@ public class UserData {
      * @return - 用户模型实例
      */
     public static UserData currentUser() {
-        if (mInstance == null) {
-            new UserData("测试");
-        }
+//        if (mInstance == null) {
+//            new UserData("测试");
+//        }
 
         return mInstance;
     }

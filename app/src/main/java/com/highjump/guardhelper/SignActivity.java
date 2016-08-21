@@ -3,6 +3,7 @@ package com.highjump.guardhelper;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +11,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -113,6 +115,9 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 })
                 .create();
+
+        // 防止NumberPicker弹出键盘
+        mDialogStorey.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
     @Override
@@ -141,9 +146,16 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
 
         mProgressDialog = ProgressDialog.show(this, "", "正在签到...");
 
+        int nPosition = 0;
+        if (mRadioHigh.isChecked()) {
+            nPosition = 1;
+        }
+
         // 调用相应的API
         API_Manager.getInstance().signArrival(
                 mCurrentUser,
+                nPosition,
+                Integer.parseInt(mEditStorey.getText().toString()),
                 new Callback() {
                     @Override
                     public void onFailure(Call call, final IOException e) {
@@ -175,9 +187,6 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
                                         return;
                                     }
 
-                                    // 更新定位时间间隔
-                                    CommonUtils.mnLocationInterval = Config.LOCATION_INTERVAL_AFTER_SIGN;
-
                                     // 返回主页面
                                     onBackPressed();
                                 }
@@ -187,8 +196,23 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
                                 }
                             }
                         });
+
+                        response.close();
                     }
                 });
     }
 
+    private void closeInputMethod() {
+//        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+//        boolean isOpen = imm.isActive();
+//        if (isOpen) {
+//            // imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);//没有显示则显示
+//            imm.hideSoftInputFromWindow(mobile_topup_num.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+//        }
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
 }

@@ -137,6 +137,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+
+                                mProgressDialog.dismiss();
+
                                 try {
                                     // 获取返回数据
                                     ApiResult resultObj = new ApiResult(response.body().string());
@@ -147,13 +150,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     }
 
                                     gotoMain();
-
-                                    mProgressDialog.dismiss();
                                 }
                                 catch (Exception e) {
                                     // 解析失败
                                     CommonUtils.createErrorAlertDialog(LoginActivity.this, Config.STR_PARSE_FAIL, e.getMessage()).show();
                                 }
+
+                                response.close();
                             }
                         });
                     }

@@ -37,14 +37,14 @@ public class MainItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             // 创建视图
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_main_item_send, parent, false);
 
-            ViewHolderReport vh = new ViewHolderReport(v);
+            ViewHolderReport vh = new ViewHolderReport(mContext, v);
             vhRes = vh;
         }
         else if (viewType == ITEM_VIEW_TYPE_RECV) {
             // 创建视图
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_main_item_recv, parent, false);
 
-            ViewHolderReport vh = new ViewHolderReport(v);
+            ViewHolderReport vh = new ViewHolderReport(mContext, v);
             vhRes = vh;
         }
 

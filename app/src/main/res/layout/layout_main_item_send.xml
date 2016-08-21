@@ -31,7 +31,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:src="@drawable/indicator_input_error" />
+            android:src="@drawable/indicator_input_error"
+            android:visibility="gone"/>
 
         <!-- 气泡试图 -->
         <RelativeLayout
@@ -46,6 +47,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="502有窗户未关请求信息指导\n有情况！ 请上前看看" />
+
+            <RelativeLayout
+                android:id="@+id/layout_media"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/imgview_msg"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="fitXY" />
+                <ImageView
+                    android:id="@+id/imgview_play"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_menu_play"
+                    android:layout_centerInParent="true"/>
+            </RelativeLayout>
 
         </RelativeLayout>
 
