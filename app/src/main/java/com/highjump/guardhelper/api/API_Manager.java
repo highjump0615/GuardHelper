@@ -1,5 +1,7 @@
 package com.highjump.guardhelper.api;
 
+import android.util.Log;
+
 import com.highjump.guardhelper.model.ReportData;
 import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
@@ -42,9 +44,11 @@ import okio.Buffer;
  */
 public class API_Manager {
 
-    private static String API_PATH_DATA = "http://123.118.218.249:3390/HDFJ_APP/App_API.jsp";
-    private static String API_PATH_ORDER = "http://123.118.218.249:3390/App_API_QueryOrder.jsp";
-    private static String API_PATH_LOCATION = "http://123.118.218.249:3390/HDFJ_APP/App_API_ReportLocation.jsp";
+    private static final String TAG = API_Manager.class.getSimpleName();
+
+    private static String API_PATH_DATA = "http://114.249.243.180:3390/APP_API/App_API.jsp";
+    private static String API_PATH_ORDER = "http://114.249.243.180:3390/APP_API/App_API_QueryOrder.jsp";
+    private static String API_PATH_LOCATION = "http://114.249.243.180:3390/APP_API/App_API_ReportLocation.jsp";
 
     // API功能
     private final String ACTION_LOGIN = "login";
@@ -240,6 +244,8 @@ public class API_Manager {
         mapParam.put("time", getCurrentTimeFormat());
 
         sendToServiceByPost(API_PATH_LOCATION, mapParam, responseCallback);
+
+        Log.e(TAG, "reportLocation");
     }
 
     /**

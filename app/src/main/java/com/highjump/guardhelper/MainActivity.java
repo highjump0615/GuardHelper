@@ -62,6 +62,7 @@ import com.highjump.guardhelper.model.UserData;
 import com.highjump.guardhelper.utils.CommonUtils;
 import com.highjump.guardhelper.utils.Config;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,6 +71,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import it.sephiroth.android.library.imagezoom.ImageViewTouch;
+import it.sephiroth.android.library.imagezoom.ImageViewTouchBase;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -84,6 +87,8 @@ public class MainActivity extends AppCompatActivity
     private static final int CAMERA_IMAGE_REQUEST_CODE = 100;
     private static final int GALLERY_IMAGE_REQUEST_CODE = 101;
     private static final int CAMERA_VIDEO_REQUEST_CODE = 102;
+
+    public static final int MEDIA_TYPE_IMAGE = 0;
 
     // 百度定位
     public LocationClient mLocationClient = null;
@@ -103,7 +108,7 @@ public class MainActivity extends AppCompatActivity
 
     // 扩大图片
     private RelativeLayout mLayoutExpanded;
-    private ImageView mImgviewExpanded;
+    private ImageViewTouch mImgviewExpanded;
     private RelativeLayout mLayoutVideoExpanded;
     private VideoView mVdoviewExpanded;
 
@@ -122,6 +127,12 @@ public class MainActivity extends AppCompatActivity
     private Handler mHandlerTimerLocation = new Handler();
 
     private Handler mHandlerUpload = new Handler();
+    private Handler mHandlerUploadApi = new Handler();
+
+    // 图片显示大小和存储大小
+    private Uri mFileUri;
+    private final double IMAGE_BUBBLE_SIZE = 200.0;
+    private final double IMAGE_MAX_SIZE = 1024.0;
 
     /**
      * Hold a reference to the current animator, so that it can be canceled mid-way.
@@ -205,7 +216,10 @@ public class MainActivity extends AppCompatActivity
         mLayoutExpanded = (RelativeLayout) findViewById(R.id.layout_expanded);
         mLayoutExpanded.setOnClickListener(this);
 
-        mImgviewExpanded = (ImageView) findViewById(R.id.imgview_expanded);
+        mImgviewExpanded = (ImageViewTouch) findViewById(R.id.imgview_expanded);
+        // set the default image display type
+        mImgviewExpanded.setDisplayType(ImageViewTouchBase.DisplayType.FIT_TO_SCREEN);
+
         mLayoutVideoExpanded = (RelativeLayout) findViewById(R.id.layout_video_expanded);
         mVdoviewExpanded = (VideoView) findViewById(R.id.video_expanded);
         mVdoviewExpanded.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -419,6 +433,19 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    /**
+     * Creating file uri to store photoImage/video
+     */
+    public Uri getOutputMediaFileUri(int type) {
+        File fileMedia = CommonUtils.getOutputMediaFile(this, type == MEDIA_TYPE_IMAGE);
+
+        if (fileMedia != null) {
+            return Uri.fromFile(fileMedia);
+        }
+        else {
+            return null;
+        }
+    }
 
     @Override
     public void onClick(View view) {
@@ -438,11 +465,15 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case R.id.but_camera:
+                mFileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+
                 // 打开相机
                 try {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                     intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
                     intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, mFileUri);
+
                     startActivityForResult(intent, CAMERA_IMAGE_REQUEST_CODE);
                 }
                 catch (ActivityNotFoundException anfe) {
@@ -454,6 +485,7 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case R.id.but_gallery:
+
                 // 打开相册
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT, null);
                 intent.setType("image/*");
@@ -490,20 +522,43 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode != RESULT_OK || data == null) {
+        if (resultCode != RESULT_OK) {
             return;
         }
 
         Bitmap imgSend = null;
+        Uri uriFile = null;
 
         // 通过相机获取图片
         if (requestCode == CAMERA_IMAGE_REQUEST_CODE) {
-            imgSend = (Bitmap) data.getExtras().get("data");
+            uriFile = mFileUri;
+//            imgSend = (Bitmap) data.getExtras().get("data");  // 这只是thumbname
         }
         // 通过相册获取图片
         else if (requestCode == GALLERY_IMAGE_REQUEST_CODE) {
+            if (data == null) {
+                return;
+            }
+
+            uriFile = data.getData();
+        }
+
+        String strVideoPath = null;
+
+        if (requestCode == CAMERA_VIDEO_REQUEST_CODE) {
+            // 处理录像
+            Uri uriVideo = data.getData();
+            Cursor cursor=this.getContentResolver().query(uriVideo, null, null, null, null);
+            if (cursor.moveToNext()) {
+                /* _data：文件的绝对路径 ，_display_name：文件名 */
+                strVideoPath = cursor.getString(cursor.getColumnIndex("_data"));
+                imgSend = CommonUtils.getVideoThumbnail(strVideoPath);
+            }
+        }
+        else {
+            // 获取图片
             try {
-                InputStream stream = getContentResolver().openInputStream(data.getData());
+                InputStream stream = getContentResolver().openInputStream(uriFile);
                 imgSend = BitmapFactory.decodeStream(stream);
                 stream.close();
             }
@@ -515,19 +570,6 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        String strVideoPath = null;
-
-        // 处理录像
-        if (requestCode == CAMERA_VIDEO_REQUEST_CODE) {
-            Uri uriVideo = data.getData();
-            Cursor cursor=this.getContentResolver().query(uriVideo, null, null, null, null);
-            if (cursor.moveToNext()) {
-                /* _data：文件的绝对路径 ，_display_name：文件名 */
-                strVideoPath = cursor.getString(cursor.getColumnIndex("_data"));
-                imgSend = CommonUtils.getVideoThumbnail(strVideoPath);
-            }
-        }
-
         // 处理图片
         if (imgSend == null) {
             return;
@@ -536,21 +578,35 @@ public class MainActivity extends AppCompatActivity
         // 缩小大小
         double dWidth = imgSend.getWidth();
         double dHeight = imgSend.getHeight();
-        double dScale = 200.0 / (dWidth > dHeight ? dWidth : dHeight);
+
+        // 决定图片的实际大小
+        double dScale = IMAGE_MAX_SIZE / (dWidth > dHeight ? dWidth : dHeight);
         dScale = dScale < 1.0 ? dScale : 1.0;
-        final int nWidth = (int) (dWidth * dScale);
-        final int nHeight = (int) (dHeight * dScale);
+        int nWidth = (int) (dWidth * dScale);
+        int nHeight = (int) (dHeight * dScale);
 
         imgSend = Bitmap.createScaledBitmap(imgSend, nWidth, nHeight, false);
 
+        // 决定图片的聊天列表大小
+        dScale = IMAGE_BUBBLE_SIZE / (dWidth > dHeight ? dWidth : dHeight);
+        dScale = dScale < 1.0 ? dScale : 1.0;
+        nWidth = (int) (dWidth * dScale);
+        nHeight = (int) (dHeight * dScale);
+
         // 创建上报数据模型
         final ReportData rData = new ReportData(imgSend, nWidth, nHeight, strVideoPath, 0);
+
+        final int nIndex = maryData.size();
+        maryData.add(rData);
+
+        // 更新聊天列表
+        mAdapter.notifyDataSetChanged();
 
         // encode图片需要时间，所以在另一个线程里做
         mHandlerUpload.postDelayed(new Runnable() {
             @Override
             public void run() {
-                uploadReportData(rData);
+                uploadReportData(rData, nIndex);
             }
         }, 50);
     }
@@ -586,7 +642,15 @@ public class MainActivity extends AppCompatActivity
 
         // 创建上报数据模型
         ReportData data = new ReportData(strData, 0);
-        uploadReportData(data);
+
+        final int nIndex = maryData.size();
+        maryData.add(data);
+
+        // 更新聊天列表
+        mAdapter.notifyDataSetChanged();
+        dismissKeyboard();
+
+        uploadReportData(data, nIndex);
 
         // 清空输入框
         mEditMsg.setText("");
@@ -595,15 +659,9 @@ public class MainActivity extends AppCompatActivity
     /**
      * 上传数据
      * @param data - 数据模型
+     * @param index - 索引
      */
-    private void uploadReportData(final ReportData data) {
-        final int nIndex = maryData.size();
-
-        maryData.add(data);
-
-        // 更新聊天列表
-        mAdapter.notifyDataSetChanged();
-        dismissKeyboard();
+    private void uploadReportData(final ReportData data, final int index) {
 
         // 上报数据
         API_Manager.getInstance().reportData(
@@ -618,7 +676,7 @@ public class MainActivity extends AppCompatActivity
                             public void run() {
                                 // 更新该气泡视图
                                 data.setStatus(ReportData.STATUS_FAILED);
-                                mAdapter.notifyItemChanged(nIndex);
+                                mAdapter.notifyItemChanged(index);
                             }
                         });
                     }
@@ -646,7 +704,7 @@ public class MainActivity extends AppCompatActivity
 
                                 // 更新该气泡视图
                                 data.setStatus(nStatus);
-                                mAdapter.notifyItemChanged(nIndex);
+                                mAdapter.notifyItemChanged(index);
 
                                 response.close();
                             }
@@ -770,10 +828,12 @@ public class MainActivity extends AppCompatActivity
                 // 缩小大小
                 double dWidth = bm.getWidth();
                 double dHeight = bm.getHeight();
-                double dScale = 200.0 / (dWidth > dHeight ? dWidth : dHeight);
+
+                // 决定图片的聊天列表大小
+                double dScale = IMAGE_BUBBLE_SIZE / (dWidth > dHeight ? dWidth : dHeight);
                 dScale = dScale < 1.0 ? dScale : 1.0;
-                final int nWidth = (int) (dWidth * dScale);
-                final int nHeight = (int) (dHeight * dScale);
+                int nWidth = (int) (dWidth * dScale);
+                int nHeight = (int) (dHeight * dScale);
 
                 ReportData data = new ReportData(bm, nWidth, nHeight, null, 1);
                 maryData.add(data);
@@ -882,7 +942,7 @@ public class MainActivity extends AppCompatActivity
 
                 CommonUtils.mCurrentLocation = location;
             }
-
+/*
             //Receive Location
             StringBuffer sb = new StringBuffer(256);
             sb.append("time : ");
@@ -946,7 +1006,7 @@ public class MainActivity extends AppCompatActivity
 
             Toast.makeText(MainActivity.this, sb.toString(), Toast.LENGTH_SHORT).show();
             Log.i("BaiduLocationApiDem", sb.toString());
-
+*/
         }
     }
 

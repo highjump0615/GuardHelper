@@ -174,6 +174,14 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
                     public void onResponse(Call call, Response response) throws IOException {
                         mProgressDialog.dismiss();
 
+                        // 失败
+                        if (!response.isSuccessful()) {
+                            CommonUtils.createErrorAlertDialog(SignActivity.this, "签到错误", response.message()).show();
+
+                            response.close();
+                            return;
+                        }
+
                         // 获取返回数据
                         final ApiResult resultObj = new ApiResult(response.body().string());
 

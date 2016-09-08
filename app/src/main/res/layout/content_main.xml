@@ -44,6 +44,7 @@
             android:id="@+id/edit_msg"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:maxHeight="100dp"
             android:layout_weight="1"/>
         <Button
             android:id="@+id/but_send"

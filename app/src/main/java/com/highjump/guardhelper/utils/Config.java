@@ -32,6 +32,11 @@ public class Config {
     public static final int ORDERNO_OUT_OF_RANGE = 1;
 
     /**
+     * directory name to store captured images and videos
+     */
+    public static final String IMAGE_DIRECTORY_NAME = "image";
+
+    /**
      * App环境初始化
      * @param ctx
      */

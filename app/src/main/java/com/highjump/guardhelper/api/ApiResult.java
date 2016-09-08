@@ -50,9 +50,12 @@ public class ApiResult {
      */
     private void resolveParamXML(String strResponse) {
 
+        String strResponseReal = strResponse.trim();
+//        strResponseReal = strResponseReal.replace("\\r", "").replace("\\n", "").replace("\\t", "");
+
         // 先把str换成inputsource, 不然parse函数把它当成URI
-        StringReader stringReader  =  new StringReader(strResponse.trim());
-        InputSource inputSource  =  new  InputSource(stringReader);
+        StringReader stringReader  =  new StringReader(strResponseReal);
+        InputSource inputSource  =  new InputSource(stringReader);
 
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

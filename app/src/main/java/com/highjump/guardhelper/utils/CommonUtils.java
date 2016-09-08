@@ -5,27 +5,39 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Environment;
 import android.util.Base64;
+import android.util.Log;
 
 import com.baidu.location.BDLocation;
+import com.highjump.guardhelper.R;
 import com.highjump.guardhelper.api.API_Manager;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Administrator on 2016/7/23.
  */
 public class CommonUtils {
+
+    private static final String TAG = CommonUtils.class.getSimpleName();
 
     // 当前位置
     public static BDLocation mCurrentLocation = null;
@@ -247,5 +259,56 @@ public class CommonUtils {
         byte[] bytes = Base64.decode(base64String, Base64.DEFAULT);
         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         return bitmap;
+    }
+
+    /*
+     * returning photoImage / video
+     */
+    public static File getOutputMediaFile(Context context, boolean isImageType) {
+        File mediaStorageDir = getMyApplicationDirectory(context, Config.IMAGE_DIRECTORY_NAME);
+
+        if (mediaStorageDir == null) return null;
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(new Date());
+        File mediaFile;
+
+        if (isImageType) {
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator /*+ "IMG_"*/ + timeStamp + ".jpg");
+        } else {
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator /*+ "VID_"*/ + timeStamp + ".3gp");
+        }
+
+        return mediaFile;
+    }
+
+    /**
+     * Get path of images to be saved
+     */
+    public static File getMyApplicationDirectory(Context context, String directoryName) {
+        String appName = context.getString(R.string.app_name);
+
+        // External sdcard location
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), appName);
+
+        // Create the storage directory if it does not exist
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d(TAG, "Oops! Failed create " + appName + " directory");
+                return null;
+            }
+        }
+
+        mediaStorageDir = new File(Environment.getExternalStorageDirectory() + File.separator + appName, directoryName);
+
+        // Create the storage directory if it does not exist
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d(TAG, "Oops! Failed create " + directoryName + " directory");
+                return null;
+            }
+        }
+
+        return mediaStorageDir;
     }
 }
