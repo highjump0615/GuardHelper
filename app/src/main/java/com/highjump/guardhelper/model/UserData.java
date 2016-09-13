@@ -35,4 +35,18 @@ public class UserData {
 
         return mInstance;
     }
+
+    /**
+     * 一般用户，还是测试用户
+     * @return
+     */
+    public boolean isNormalUser() {
+        boolean bRes = true;
+
+        if (mStrUsername.equals(DEFAULT_USER)) {
+            bRes = false;
+        }
+
+        return bRes;
+    }
 }

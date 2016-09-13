@@ -3,11 +3,13 @@ package com.highjump.guardhelper.utils;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
@@ -15,6 +17,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 
@@ -128,35 +131,6 @@ public class CommonUtils {
         }
     }
 
-    /**
-     * 得到视频缩略图
-     * @param filePath - 视频路径
-     * @return
-     */
-    public static Bitmap getVideoThumbnail(String filePath) {
-        Bitmap bitmap = null;
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        try {
-            retriever.setDataSource(filePath);
-            bitmap = retriever.getFrameAtTime();
-        }
-        catch(IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-        catch (RuntimeException e) {
-            e.printStackTrace();
-        }
-        finally {
-            try {
-                retriever.release();
-            }
-            catch (RuntimeException e) {
-                e.printStackTrace();
-            }
-        }
-        return bitmap;
-    }
-
     // 播放asset的音频
     public static void playSound(Context context, String fileName) {
         try {
@@ -218,49 +192,6 @@ public class CommonUtils {
         }
     }
 
-
-    /**
-     * bitmap转base64
-     */
-    public static String bitmapToBase64(Bitmap bitmap) {
-        String result = "";
-        ByteArrayOutputStream bos=null;
-
-        try {
-            if(null != bitmap){
-                bos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos); //将bitmap放入字节数组流中
-
-                bos.flush(); //将bos流缓存在内存中的数据全部输出，清空缓存
-                bos.close();
-
-                byte []bitmapByte = bos.toByteArray();
-                result = Base64.encodeToString(bitmapByte, Base64.DEFAULT);
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        finally{
-            try {
-                bos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * base64转bitmap
-     */
-    public static Bitmap base64ToBitmap(String base64String){
-        byte[] bytes = Base64.decode(base64String, Base64.DEFAULT);
-        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        return bitmap;
-    }
-
     /*
      * returning photoImage / video
      */
@@ -310,5 +241,40 @@ public class CommonUtils {
         }
 
         return mediaStorageDir;
+    }
+
+    /**
+     * Try to return the absolute file path from the given Uri
+     *
+     * @param context
+     * @param uri
+     * @return the file path or null
+     */
+    public static String getRealFilePath( final Context context, final Uri uri ) {
+        if ( null == uri )
+            return null;
+
+        final String scheme = uri.getScheme();
+        String data = null;
+
+        if ( scheme == null ) {
+            data = uri.getPath();
+        }
+        else if ( ContentResolver.SCHEME_FILE.equals( scheme ) ) {
+            data = uri.getPath();
+        }
+        else if ( ContentResolver.SCHEME_CONTENT.equals( scheme ) ) {
+            Cursor cursor = context.getContentResolver().query( uri, new String[] { MediaStore.Images.ImageColumns.DATA }, null, null, null );
+            if ( null != cursor ) {
+                if ( cursor.moveToFirst() ) {
+                    int index = cursor.getColumnIndex( MediaStore.Images.ImageColumns.DATA );
+                    if ( index > -1 ) {
+                        data = cursor.getString( index );
+                    }
+                }
+                cursor.close();
+            }
+        }
+        return data;
     }
 }

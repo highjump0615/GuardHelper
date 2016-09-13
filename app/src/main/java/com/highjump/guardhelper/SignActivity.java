@@ -139,6 +139,10 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void doSign() {
 
+        if (!mCurrentUser.isNormalUser()) {
+            return;
+        }
+
         // 如果正在签到，则退出
         if (mProgressDialog != null && mProgressDialog.isShowing()) {
             return;

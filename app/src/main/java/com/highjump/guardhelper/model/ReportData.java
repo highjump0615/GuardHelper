@@ -1,8 +1,13 @@
 package com.highjump.guardhelper.model;
 
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.TextUtils;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -10,7 +15,7 @@ import java.util.TimeZone;
 /**
  * Created by Administrator on 2016/7/28.
  */
-public class ReportData {
+public class ReportData implements Parcelable {
 
     // 状态
     public static int STATUS_INPROGRESS = 0;
@@ -29,11 +34,12 @@ public class ReportData {
     private int mnSend = 0;
 
     private String mstrData;
-    private Bitmap mBitmap;
+    private Bitmap mBmpThumb;
 
     // 图片属性
     private int mnWidth;
     private int mnHeight;
+    private Uri mUriImage;
 
     /**
      * constructor
@@ -51,14 +57,22 @@ public class ReportData {
 
     /**
      * Constructor
-     * @param data - 图片信息
-     * @param receive - 0:上报, 1:获取
      */
-    public ReportData(Bitmap data, int nWidth, int nHeight, String videoPath, int receive) {
-        mBitmap = data;
+    public ReportData() {
+    }
+
+    /**
+     * Constructor
+     * @param data 图片信息
+     * @param uriImage 图片Uri, 仅限于发出图片：图库和相机
+     * @param receive 0:上报, 1:获取
+     */
+    public ReportData(Bitmap data, int nWidth, int nHeight, Uri uriImage, String videoPath, int receive) {
+        mBmpThumb = data;
 
         mnWidth = nWidth;
         mnHeight = nHeight;
+        mUriImage = uriImage;
 
         mnSend = receive;
 
@@ -85,7 +99,7 @@ public class ReportData {
     }
 
     public Bitmap getBitmapData() {
-        return mBitmap;
+        return mBmpThumb;
     }
 
     public int getWidth() {
@@ -100,8 +114,16 @@ public class ReportData {
         return mnType;
     }
 
+    public void setType(int type) {
+        mnType = type;
+    }
+
     public int getStatus() {
         return mnStatus;
+    }
+
+    public Uri getUriImage() {
+        return mUriImage;
     }
 
     public void setStatus(int value) {
@@ -116,4 +138,31 @@ public class ReportData {
 
         return strTime;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mstrData);
+    }
+
+    //静态的Parcelable.Creator接口
+    public static final Parcelable.Creator<ReportData> CREATOR = new Creator<ReportData>() {
+
+        //创建出类的实例，并从Parcel中获取数据进行实例化
+        public ReportData createFromParcel(Parcel source) {
+            ReportData rData = new ReportData();
+            rData.mstrData = source.readString();
+
+            return rData;
+        }
+
+        public ReportData[] newArray(int size) {
+            return new ReportData[size];
+        }
+
+    };
 }
