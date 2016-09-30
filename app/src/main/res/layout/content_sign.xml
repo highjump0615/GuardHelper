@@ -66,4 +66,12 @@
         android:text="签 到"
         android:textSize="@dimen/login_but_text_size"  />
 
+    <Button
+        android:id="@+id/but_sensor"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/login_but_height"
+        android:layout_marginTop="45dp"
+        android:text="@string/title_activity_sensor"
+        android:textSize="@dimen/login_but_text_size"  />
+
 </LinearLayout>

@@ -83,7 +83,12 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
         // 默认是街道签到
         mRadioStreet.setChecked(true);
 
+        // 签到按钮
         Button button = (Button) findViewById(R.id.but_sign);
+        button.setOnClickListener(this);
+
+        // 感官检查按钮
+        button = (Button) findViewById(R.id.but_sensor);
         button.setOnClickListener(this);
 
         // 楼层输入框
@@ -127,6 +132,10 @@ public class SignActivity extends AppCompatActivity implements View.OnClickListe
         switch (id) {
             case R.id.but_sign:
                 doSign();
+                break;
+
+            case R.id.but_sensor:
+                CommonUtils.moveNextActivity(this, SensorActivity.class, false);
                 break;
 
             default:

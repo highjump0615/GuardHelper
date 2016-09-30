@@ -29,4 +29,4 @@ DOM, SAX, PULL 三种方式； 其中<br />
 [http://mvnrepository.com/artifact/it.sephiroth.android.library.imagezoom/imagezoom](http://mvnrepository.com/artifact/it.sephiroth.android.library.imagezoom/imagezoom)
 [https://github.com/sephiroth74/ImageViewZoom](https://github.com/sephiroth74/ImageViewZoom)
 - 用VideoView实现视频的播放，为了居中放在RelativeLayout里面封装了
-- 实现了Parcelabel做了Activity之间传数据
+- 实现了Parcelable做了Activity之间传数据

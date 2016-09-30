@@ -12,7 +12,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:popupTheme="@style/AppTheme.PopupOverlay">
-\
+
         <TextView
             android:id="@+id/text_tb_username"
             android:layout_width="wrap_content"

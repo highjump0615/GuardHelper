@@ -23,5 +23,6 @@
 
     <string name="title_activity_setting">设置</string>
     <string name="title_activity_exit">退出</string>
+    <string name="title_activity_sensor">感官检查</string>
 
 </resources>
