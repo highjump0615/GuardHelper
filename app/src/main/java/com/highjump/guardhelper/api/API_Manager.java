@@ -47,9 +47,9 @@ public class API_Manager {
 
     private static final String TAG = API_Manager.class.getSimpleName();
 
-    private static String API_PATH_DATA = "http://123.118.218.249:3390/HDFJ_APP/App_API.jsp";
-    private static String API_PATH_ORDER = "http://123.118.218.249:3390/HDFJ_APP/App_API_QueryOrder.jsp";
-    private static String API_PATH_LOCATION = "http://123.118.218.249:3390/HDFJ_APP/App_API_ReportLocation.jsp";
+    private static String API_PATH_DATA = "http://114.251.162.151:80/APP_API/App_API.jsp";
+    private static String API_PATH_ORDER = "http://114.251.162.151:80/APP_API/App_API_QueryOrder.jsp";
+    private static String API_PATH_LOCATION = "http://114.251.162.151:80/APP_API/App_API_ReportLocation.jsp";
 
 //    private static String API_PATH_DATA = "http://172.16.1.16/guardhelper";
 //    private static String API_PATH_ORDER = "http://172.16.1.16/guardhelper";
